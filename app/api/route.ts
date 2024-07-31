@@ -1,10 +1,10 @@
-// app/api/upload/route.ts (or route.js)
+// app/api/upload/route.ts
 import formidable from 'formidable';
 import fs from 'fs';
 import path from 'path';
 import { NextResponse } from 'next/server';
 
-// Configure form parsing settings
+// Configure the directory for file uploads
 const uploadDir = path.join(process.cwd(), 'public/uploads');
 
 export async function POST(req: Request) {
@@ -20,9 +20,14 @@ export async function POST(req: Request) {
         return;
       }
 
-      const file = files.file[0]; // Adjust this if the field name differs
-      fs.renameSync(file.filepath, path.join(uploadDir, file.originalFilename || file.newFilename));
+      // Assume the field name for file is 'file'; adjust if different
+      const file = files.file[0];
 
+      // Rename and move the file to the upload directory
+      const newFilePath = path.join(uploadDir, file.originalFilename || file.newFilename);
+      fs.renameSync(file.filepath, newFilePath);
+
+      // Respond with the URL of the uploaded file
       resolve(NextResponse.json({ url: `/uploads/${file.newFilename || file.originalFilename}` }));
     });
   });
