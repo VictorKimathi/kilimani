@@ -7,7 +7,12 @@ import { NextResponse } from 'next/server';
 // Configure the directory for file uploads
 const uploadDir = path.join(process.cwd(), 'public/uploads');
 
-export async function POST(req: Request) {
+// Ensure the upload directory exists
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+export async function POST(req: Request): Promise<Response> {
   return new Promise((resolve, reject) => {
     const form = new formidable.IncomingForm({
       uploadDir,
@@ -16,12 +21,15 @@ export async function POST(req: Request) {
 
     form.parse(req, (err, fields, files) => {
       if (err) {
-        reject(err);
-        return;
+        return reject(NextResponse.json({ error: 'Error parsing the files.' }, { status: 500 }));
       }
 
       // Assume the field name for file is 'file'; adjust if different
-      const file = files.file[0];
+      const file = files.file?.[0];
+
+      if (!file) {
+        return reject(NextResponse.json({ error: 'No file uploaded.' }, { status: 400 }));
+      }
 
       // Rename and move the file to the upload directory
       const newFilePath = path.join(uploadDir, file.originalFilename || file.newFilename);
