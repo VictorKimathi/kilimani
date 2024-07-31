@@ -1,36 +1,29 @@
-import formidable from "formidable";
-import fs from "fs";
-import path from "path";
+// app/api/upload/route.ts (or route.js)
+import formidable from 'formidable';
+import fs from 'fs';
+import path from 'path';
+import { NextResponse } from 'next/server';
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+// Configure form parsing settings
+const uploadDir = path.join(process.cwd(), 'public/uploads');
 
-const uploadDir = path.join(process.cwd(), "public/uploads");
+export async function POST(req: Request) {
+  return new Promise((resolve, reject) => {
+    const form = new formidable.IncomingForm({
+      uploadDir,
+      keepExtensions: true,
+    });
 
-const handleFileUpload = (req, res) => {
-  const form = new formidable.IncomingForm({
-    uploadDir,
-    keepExtensions: true,
+    form.parse(req, (err, fields, files) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      const file = files.file[0]; // Adjust this if the field name differs
+      fs.renameSync(file.filepath, path.join(uploadDir, file.originalFilename || file.newFilename));
+
+      resolve(NextResponse.json({ url: `/uploads/${file.newFilename || file.originalFilename}` }));
+    });
   });
-
-  form.on("file", (field, file) => {
-    fs.renameSync(file.path, path.join(uploadDir, file.name));
-  });
-
-  form.on("end", () => {
-    res.status(200).json({ url: `/uploads/${file.name}` });
-  });
-
-  form.parse(req);
-};
-
-export default (req, res) => {
-  if (req.method === "POST") {
-    handleFileUpload(req, res);
-  } else {
-    res.status(405).send("Method Not Allowed");
-  }
 }
