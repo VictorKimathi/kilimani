@@ -22,7 +22,7 @@ const Messages: React.FC = () => {
           className={cn(
             "bg-white rounded-lg p-3 text-black text-sm mb-3",
             index !== messages.length - 1 && "border-b border-gray-200"
-          )}x 
+          )}
         />
       ))}
     </MessageList>
